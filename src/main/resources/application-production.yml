@@ -1,0 +1,13 @@
+spring:
+  ai:
+    openai:
+      base-url: ${OLLAMA_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${AI_MODEL:mistral}
+          temperature: 0.7
+
+logging:
+  level:
+    org.springframework.web: INFO
+    com.example.smartemailassistant: INFO

@@ -1,0 +1,1 @@
+web: java -jar target/smart-email-assistant-0.0.1-SNAPSHOT.jar

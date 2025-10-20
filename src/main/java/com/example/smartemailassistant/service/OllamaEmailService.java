@@ -46,8 +46,12 @@ public class OllamaEmailService {
                     "num_predict", 1000
             ));
 
+            // UPDATED: Added ngrok headers to fix 403 Forbidden errors
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("ngrok-skip-browser-warning", "true");
+            headers.set("User-Agent", "SmartEmailAssistant");
+            headers.set("Accept", "*/*");
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(ollamaRequest, headers);
 
@@ -86,7 +90,7 @@ public class OllamaEmailService {
     private EmailResponse parseGeneratedContent(String content) {
         EmailResponse response = new EmailResponse();
         response.setSuccess(true);
-        response.setProvider("Ollama Mistral"); // ADDED: Set provider field
+        response.setProvider("Ollama Mistral");
 
         try {
             // Look for the SUBJECT: and BODY: markers
@@ -141,8 +145,8 @@ public class OllamaEmailService {
     private EmailResponse createFallbackResponse(EmailRequest request, String error) {
         EmailResponse response = new EmailResponse();
         response.setSuccess(false);
-        response.setProvider("Ollama Mistral"); // ADDED: Set provider field
-        response.setErrorMessage(error); // ADDED: Set error message field
+        response.setProvider("Ollama Mistral");
+        response.setErrorMessage(error);
 
         response.setGeneratedEmail(
                 "Dear " + request.getRecipient() + ",\n\n" +

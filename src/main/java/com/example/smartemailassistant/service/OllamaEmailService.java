@@ -21,10 +21,10 @@ public class OllamaEmailService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${ai.base-url:http://localhost:11434}")
+    @Value("${AI_BASE_URL:http://localhost:11434}")
     private String ollamaBaseUrl;
 
-    @Value("${ai.model:mistral}")
+    @Value("${OLLAMA_MODEL:mistral}")
     private String aiModel;
 
     public OllamaEmailService() {

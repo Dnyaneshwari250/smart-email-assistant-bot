@@ -19,7 +19,7 @@ public class OllamaEmailService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${spring.ai.openai.base-url:http://localhost:11434}")
+    @Value("${AI_BASE_URL:http://localhost:11434}")
     private String ollamaBaseUrl;
 
     @Value("${spring.ai.openai.chat.options.model:mistral}")

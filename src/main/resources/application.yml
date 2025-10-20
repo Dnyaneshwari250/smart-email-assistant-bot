@@ -3,17 +3,21 @@ spring:
     name: smart-email-assistant
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  mvc:
+    static-path-pattern: /static/**
+  web:
+    resources:
+      static-locations: classpath:/static/
 
 server:
   port: ${PORT:8080}
   servlet:
     context-path: /
 
-# AI Configuration - FIXED: No circular reference
-ai:
-  AI_BASE_URL: ${AI_BASE_URL:http://localhost:11434}
-  OLLAMA_MODEL: ${OLLAMA_MODEL:mistral}
+# Google Gemini API Configuration
+GEMINI_API_KEY: ${GEMINI_API_KEY:}
 
 logging:
   level:
-    com.example.smartemailassistant: DEBUG
+    com.example.smartemailassistant: INFO
+    org.springframework.web: INFO

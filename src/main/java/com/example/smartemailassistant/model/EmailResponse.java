@@ -9,7 +9,7 @@ public class EmailResponse {
 
     // Constructors
     public EmailResponse() {
-        this.success = false; // Default to false for safety
+        this.success = false;
     }
 
     public EmailResponse(String generatedEmail, String subject, boolean success, String provider) {

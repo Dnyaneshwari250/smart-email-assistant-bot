@@ -7,13 +7,13 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.smartemailassistant.model.EmailRequest;
 import com.example.smartemailassistant.model.EmailResponse;
-import com.example.smartemailassistant.service.OllamaEmailService;
+import com.example.smartemailassistant.service.GeminiEmailService;
 
 @Controller
 public class EmailController {
 
     @Autowired
-    private OllamaEmailService emailService;
+    private GeminiEmailService emailService;
 
     @GetMapping("/")
     public String home(Model model) {
@@ -33,5 +33,11 @@ public class EmailController {
         System.out.println("📤 Sending response - Success: " + response.isSuccess());
 
         return response;
+    }
+
+    @GetMapping("/health")
+    @ResponseBody
+    public String healthCheck() {
+        return "Smart Email Assistant is running!";
     }
 }

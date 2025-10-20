@@ -9,6 +9,11 @@ import com.example.smartemailassistant.model.EmailRequest;
 import com.example.smartemailassistant.model.EmailResponse;
 import com.example.smartemailassistant.service.GeminiEmailService;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+
 @Controller
 public class EmailController {
 

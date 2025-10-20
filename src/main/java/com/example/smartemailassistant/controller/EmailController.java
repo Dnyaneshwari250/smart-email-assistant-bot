@@ -18,6 +18,10 @@ public class EmailController {
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("emailRequest", new EmailRequest());
+        // Initialize empty response
+        EmailResponse emptyResponse = new EmailResponse();
+        emptyResponse.setSuccess(false);
+        model.addAttribute("emailResponse", emptyResponse);
         return "index";
     }
 

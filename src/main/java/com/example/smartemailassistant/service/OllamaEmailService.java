@@ -22,7 +22,7 @@ public class OllamaEmailService {
     @Value("${AI_BASE_URL:http://localhost:11434}")
     private String ollamaBaseUrl;
 
-    @Value("${spring.ai.openai.chat.options.model:mistral}")
+    @Value("${OLLAMA_MODEL:mistral}")
     private String aiModel;
 
     public OllamaEmailService() {
@@ -86,6 +86,7 @@ public class OllamaEmailService {
     private EmailResponse parseGeneratedContent(String content) {
         EmailResponse response = new EmailResponse();
         response.setSuccess(true);
+        response.setProvider("Ollama Mistral"); // ADDED: Set provider field
 
         try {
             // Look for the SUBJECT: and BODY: markers
@@ -140,6 +141,9 @@ public class OllamaEmailService {
     private EmailResponse createFallbackResponse(EmailRequest request, String error) {
         EmailResponse response = new EmailResponse();
         response.setSuccess(false);
+        response.setProvider("Ollama Mistral"); // ADDED: Set provider field
+        response.setErrorMessage(error); // ADDED: Set error message field
+
         response.setGeneratedEmail(
                 "Dear " + request.getRecipient() + ",\n\n" +
                         "I hope this message finds you well. This is regarding: " + request.getPrompt() + "\n\n" +

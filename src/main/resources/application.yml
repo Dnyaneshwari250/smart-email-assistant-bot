@@ -3,20 +3,17 @@ spring:
     name: smart-email-assistant
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
-  ai:
-    openai:
-      base-url: ${AI_BASE_URL:http://localhost:11434}
-      api-key: not-needed-for-ollama
-      chat:
-        options:
-          model: llama2
 
 server:
   port: ${PORT:8080}
   servlet:
     context-path: /
 
+# Custom Ollama Configuration for manual service
+AI_BASE_URL: http://localhost:11434
+OLLAMA_MODEL: mistral
+
 logging:
   level:
-    com.example.smartemailassistant: INFO
-    org.springframework.ai: INFO
+    com.example.smartemailassistant: DEBUG
+    org.springframework.web: DEBUG

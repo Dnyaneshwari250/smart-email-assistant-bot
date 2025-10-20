@@ -1,13 +1,14 @@
 spring:
-  ai:
-    openai:
-      base-url: ${OLLAMA_URL:http://localhost:11434}
-      chat:
-        options:
-          model: ${AI_MODEL:mistral}
-          temperature: 0.7
+  application:
+    name: smart-email-assistant
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
 
 logging:
   level:
-    org.springframework.web: INFO
     com.example.smartemailassistant: INFO

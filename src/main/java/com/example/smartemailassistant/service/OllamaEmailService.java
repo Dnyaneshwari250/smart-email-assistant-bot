@@ -13,6 +13,7 @@ import com.example.smartemailassistant.model.EmailResponse;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @Service
 public class OllamaEmailService {
@@ -33,20 +34,19 @@ public class OllamaEmailService {
         try {
             String prompt = buildPrompt(request);
 
-            // Use the configured base URL and model
-            String apiUrl = ollamaBaseUrl + "/api/generate/";
+            // Use OpenAI-compatible endpoint
+            String apiUrl = ollamaBaseUrl + "/v1/chat/completions";
 
-            // Prepare the request to Ollama
+            // Prepare the request in OpenAI format
             Map<String, Object> ollamaRequest = new HashMap<>();
             ollamaRequest.put("model", aiModel);
-            ollamaRequest.put("prompt", prompt);
+            ollamaRequest.put("messages", new Object[]{
+                    Map.of("role", "user", "content", prompt)
+            });
             ollamaRequest.put("stream", false);
-            ollamaRequest.put("options", Map.of(
-                    "temperature", 0.7,
-                    "num_predict", 1000
-            ));
+            ollamaRequest.put("temperature", 0.7);
+            ollamaRequest.put("max_tokens", 1000);
 
-            // UPDATED: Added ngrok headers to fix 403 Forbidden errors
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("ngrok-skip-browser-warning", "true");
@@ -55,7 +55,7 @@ public class OllamaEmailService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(ollamaRequest, headers);
 
-            System.out.println("🚀 Sending to Ollama at: " + apiUrl);
+            System.out.println("🚀 Using OpenAI-compatible endpoint: " + apiUrl);
             System.out.println("📝 Using model: " + aiModel);
             System.out.println("💬 Prompt: " + prompt);
 
@@ -63,15 +63,27 @@ public class OllamaEmailService {
             ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                String generatedContent = (String) response.getBody().get("response");
-                System.out.println("✅ Ollama response received");
-                return parseGeneratedContent(generatedContent);
+                Map<String, Object> responseBody = response.getBody();
+
+                // Extract response from OpenAI-compatible format
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+                if (choices != null && !choices.isEmpty()) {
+                    Map<String, Object> choice = choices.get(0);
+                    Map<String, Object> message = (Map<String, Object>) choice.get("message");
+                    String generatedContent = (String) message.get("content");
+
+                    System.out.println("✅ Ollama response received via OpenAI API");
+                    return parseGeneratedContent(generatedContent);
+                } else {
+                    throw new RuntimeException("No choices in response");
+                }
             } else {
                 throw new RuntimeException("Ollama API returned: " + response.getStatusCode());
             }
 
         } catch (Exception e) {
             System.out.println("❌ Ollama failed: " + e.getMessage());
+            e.printStackTrace();
             return createFallbackResponse(request, e.getMessage());
         }
     }

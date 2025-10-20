@@ -6,6 +6,9 @@ public class EmailRequest {
     private String recipient;
     private String subjectHint;
 
+    // Default constructor
+    public EmailRequest() {}
+
     // Getters and Setters
     public String getPrompt() { return prompt; }
     public void setPrompt(String prompt) { this.prompt = prompt; }

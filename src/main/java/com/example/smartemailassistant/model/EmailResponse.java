@@ -7,6 +7,9 @@ public class EmailResponse {
     private String provider;
     private String errorMessage;
 
+    // Default constructor
+    public EmailResponse() {}
+
     // Getters and Setters
     public String getGeneratedEmail() { return generatedEmail; }
     public void setGeneratedEmail(String generatedEmail) { this.generatedEmail = generatedEmail; }

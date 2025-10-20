@@ -9,9 +9,10 @@ server:
   servlet:
     context-path: /
 
-# Custom Ollama Configuration
-AI_BASE_URL: http://localhost:11434
-OLLAMA_MODEL: mistral
+# AI Configuration - FIXED: No circular reference
+ai:
+  base-url: ${AI_BASE_URL:http://localhost:11434}
+  model: ${OLLAMA_MODEL:mistral}
 
 logging:
   level:

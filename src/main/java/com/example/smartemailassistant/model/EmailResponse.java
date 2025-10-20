@@ -8,7 +8,9 @@ public class EmailResponse {
     private String errorMessage;
 
     // Constructors
-    public EmailResponse() {}
+    public EmailResponse() {
+        this.success = false; // Default to false for safety
+    }
 
     public EmailResponse(String generatedEmail, String subject, boolean success, String provider) {
         this.generatedEmail = generatedEmail;
@@ -18,18 +20,48 @@ public class EmailResponse {
     }
 
     // Getters and Setters
-    public String getGeneratedEmail() { return generatedEmail; }
-    public void setGeneratedEmail(String generatedEmail) { this.generatedEmail = generatedEmail; }
+    public String getGeneratedEmail() {
+        return generatedEmail != null ? generatedEmail : "";
+    }
+    public void setGeneratedEmail(String generatedEmail) {
+        this.generatedEmail = generatedEmail;
+    }
 
-    public String getSubject() { return subject; }
-    public void setSubject(String subject) { this.subject = subject; }
+    public String getSubject() {
+        return subject != null ? subject : "No Subject";
+    }
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
 
-    public boolean isSuccess() { return success; }
-    public void setSuccess(boolean success) { this.success = success; }
+    public boolean isSuccess() {
+        return success;
+    }
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
 
-    public String getProvider() { return provider; }
-    public void setProvider(String provider) { this.provider = provider; }
+    public String getProvider() {
+        return provider != null ? provider : "Unknown";
+    }
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
 
-    public String getErrorMessage() { return errorMessage; }
-    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+    public String getErrorMessage() {
+        return errorMessage != null ? errorMessage : "";
+    }
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    @Override
+    public String toString() {
+        return "EmailResponse{" +
+                "success=" + success +
+                ", provider='" + provider + '\'' +
+                ", subject='" + subject + '\'' +
+                ", errorMessage='" + errorMessage + '\'' +
+                '}';
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.smartemailassistant.model.EmailRequest;
 import com.example.smartemailassistant.model.EmailResponse;
@@ -20,120 +21,176 @@ public class OllamaEmailService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${AI_BASE_URL:http://localhost:11434}")
+    @Value("${ai.base-url:http://localhost:11434}")
     private String ollamaBaseUrl;
 
-    @Value("${OLLAMA_MODEL:mistral}")
+    @Value("${ai.model:mistral}")
     private String aiModel;
 
     public OllamaEmailService() {
         this.restTemplate = new RestTemplate();
+        // Increase timeout settings
+        // ((HttpComponentsClientHttpRequestFactory) restTemplate.getRequestFactory()).setConnectTimeout(10000);
+        // ((HttpComponentsClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(30000);
     }
 
     public EmailResponse generateEmail(EmailRequest request) {
+        System.out.println("=== 🚀 STARTING EMAIL GENERATION ===");
+        System.out.println("🔧 AI_BASE_URL: " + ollamaBaseUrl);
+        System.out.println("🔧 OLLAMA_MODEL: " + aiModel);
+
         try {
             String prompt = buildPrompt(request);
+            System.out.println("💬 Prompt: " + prompt);
 
-            // Try multiple endpoints
-            EmailResponse response = tryOpenAIEndpoint(prompt);
-            if (response != null) {
+            // Test basic connection first
+            if (!testConnection()) {
+                throw new RuntimeException("Cannot connect to Ollama service");
+            }
+
+            // Try endpoints in sequence
+            EmailResponse response = tryChatCompletionsEndpoint(prompt);
+            if (response != null && response.isSuccess()) {
                 return response;
             }
 
-            // If OpenAI endpoint fails, try legacy endpoint
-            response = tryLegacyEndpoint(prompt);
-            if (response != null) {
+            response = tryGenerateEndpoint(prompt);
+            if (response != null && response.isSuccess()) {
                 return response;
             }
 
-            throw new RuntimeException("All API endpoints failed");
+            // Final fallback
+            return createFallbackResponse(request, "All API endpoints failed. Please check if Ollama is running and accessible.");
 
         } catch (Exception e) {
-            System.out.println("❌ Ollama failed: " + e.getMessage());
-            e.printStackTrace();
-            return createFallbackResponse(request, e.getMessage());
+            System.out.println("❌ FINAL ERROR: " + e.getMessage());
+            return createFallbackResponse(request, "Service error: " + e.getMessage());
         }
     }
 
-    private EmailResponse tryOpenAIEndpoint(String prompt) {
+    private boolean testConnection() {
         try {
-            String apiUrl = ollamaBaseUrl + "/v1/chat/completions";
-
-            Map<String, Object> ollamaRequest = new HashMap<>();
-            ollamaRequest.put("model", aiModel);
-            ollamaRequest.put("messages", new Object[]{
-                    Map.of("role", "user", "content", prompt)
-            });
-            ollamaRequest.put("stream", false);
-            ollamaRequest.put("temperature", 0.7);
-            ollamaRequest.put("max_tokens", 1000);
+            String testUrl = ollamaBaseUrl + "/api/tags";
+            System.out.println("🔍 Testing connection to: " + testUrl);
 
             HttpHeaders headers = createHeaders();
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(ollamaRequest, headers);
+            // Remove body for GET request
+            ResponseEntity<String> response = restTemplate.getForEntity(testUrl, String.class);
 
-            System.out.println("🚀 Trying OpenAI endpoint: " + apiUrl);
+            System.out.println("✅ Connection test SUCCESS: " + response.getStatusCode());
+            return true;
+
+        } catch (Exception e) {
+            System.out.println("❌ Connection test FAILED: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private EmailResponse tryChatCompletionsEndpoint(String prompt) {
+        System.out.println("🔄 Attempting /v1/chat/completions endpoint...");
+        try {
+            String apiUrl = ollamaBaseUrl + "/v1/chat/completions";
+            System.out.println("🔗 Endpoint URL: " + apiUrl);
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", aiModel);
+            requestBody.put("messages", new Object[]{
+                    Map.of("role", "user", "content", prompt)
+            });
+            requestBody.put("stream", false);
+            requestBody.put("temperature", 0.7);
+            requestBody.put("max_tokens", 1000);
+
+            HttpHeaders headers = createHeaders();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+            System.out.println("📡 Response status: " + response.getStatusCode());
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-                if (choices != null && !choices.isEmpty()) {
-                    Map<String, Object> choice = choices.get(0);
-                    Map<String, Object> message = (Map<String, Object>) choice.get("message");
-                    String generatedContent = (String) message.get("content");
 
-                    System.out.println("✅ Success with OpenAI endpoint");
-                    return parseGeneratedContent(generatedContent);
+                // Parse OpenAI-compatible response
+                if (responseBody.containsKey("choices")) {
+                    List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+                    if (choices != null && !choices.isEmpty()) {
+                        Map<String, Object> firstChoice = choices.get(0);
+                        if (firstChoice.containsKey("message")) {
+                            Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+                            String content = (String) message.get("content");
+
+                            System.out.println("✅ /v1/chat/completions endpoint SUCCESS");
+                            return parseGeneratedContent(content);
+                        }
+                    }
                 }
             }
+
+            System.out.println("❌ /v1/chat/completions endpoint failed - invalid response format");
+            return null;
+
         } catch (Exception e) {
-            System.out.println("❌ OpenAI endpoint failed: " + e.getMessage());
+            System.out.println("❌ /v1/chat/completions endpoint FAILED: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
-    private EmailResponse tryLegacyEndpoint(String prompt) {
+    private EmailResponse tryGenerateEndpoint(String prompt) {
+        System.out.println("🔄 Attempting /api/generate endpoint...");
         try {
             String apiUrl = ollamaBaseUrl + "/api/generate";
+            System.out.println("🔗 Endpoint URL: " + apiUrl);
 
-            Map<String, Object> ollamaRequest = new HashMap<>();
-            ollamaRequest.put("model", aiModel);
-            ollamaRequest.put("prompt", prompt);
-            ollamaRequest.put("stream", false);
-            ollamaRequest.put("temperature", 0.7);
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", aiModel);
+            requestBody.put("prompt", prompt);
+            requestBody.put("stream", false);
+            requestBody.put("temperature", 0.7);
 
             HttpHeaders headers = createHeaders();
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(ollamaRequest, headers);
-
-            System.out.println("🚀 Trying legacy endpoint: " + apiUrl);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+            System.out.println("📡 Response status: " + response.getStatusCode());
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                String generatedContent = (String) response.getBody().get("response");
-                System.out.println("✅ Success with legacy endpoint");
-                return parseGeneratedContent(generatedContent);
+                Map<String, Object> responseBody = response.getBody();
+
+                if (responseBody.containsKey("response")) {
+                    String content = (String) responseBody.get("response");
+                    System.out.println("✅ /api/generate endpoint SUCCESS");
+                    return parseGeneratedContent(content);
+                }
             }
+
+            System.out.println("❌ /api/generate endpoint failed - invalid response format");
+            return null;
+
         } catch (Exception e) {
-            System.out.println("❌ Legacy endpoint failed: " + e.getMessage());
+            System.out.println("❌ /api/generate endpoint FAILED: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("User-Agent", "SmartEmailAssistant");
-        headers.set("Accept", "*/*");
-        // Removed ngrok-specific headers for Serveo
+        headers.set("User-Agent", "SmartEmailAssistant/1.0");
+        headers.set("Accept", "application/json");
+
+        // Add ngrok headers if using ngrok, remove if using Serveo
+        if (ollamaBaseUrl.contains("ngrok")) {
+            headers.set("ngrok-skip-browser-warning", "true");
+        }
+
         return headers;
     }
 
     private String buildPrompt(EmailRequest request) {
         return String.format(
-                "Generate a %s email based on: %s. Recipient: %s. Subject hint: %s. " +
-                        "Return in format: SUBJECT: <subject>\\n\\nBODY: <email body>",
+                "Generate a professional %s email about: %s. The email is for: %s. " +
+                        "Subject suggestion: %s. " +
+                        "Please format your response exactly as: SUBJECT: <email subject>\\n\\nBODY: <email body content>",
                 request.getTone().toLowerCase(),
                 request.getPrompt(),
                 request.getRecipient(),
@@ -144,23 +201,27 @@ public class OllamaEmailService {
     private EmailResponse parseGeneratedContent(String content) {
         EmailResponse response = new EmailResponse();
         response.setSuccess(true);
-        response.setProvider("Ollama Mistral");
+        response.setProvider("Ollama AI");
 
         try {
             if (content.contains("SUBJECT:") && content.contains("BODY:")) {
+                // Extract subject
                 int subjectStart = content.indexOf("SUBJECT:") + "SUBJECT:".length();
-                int bodyStart = content.indexOf("BODY:") + "BODY:".length();
+                int bodyStart = content.indexOf("BODY:");
+                String subject = content.substring(subjectStart, bodyStart).trim();
 
-                String subject = content.substring(subjectStart, content.indexOf("BODY:")).trim();
-                String body = content.substring(bodyStart).trim();
+                // Extract body
+                int bodyContentStart = bodyStart + "BODY:".length();
+                String body = content.substring(bodyContentStart).trim();
 
                 response.setSubject(subject);
                 response.setGeneratedEmail(body);
             } else {
+                // Fallback parsing
                 extractSubjectAndBody(content, response);
             }
         } catch (Exception e) {
-            System.out.println("❌ Parsing failed: " + e.getMessage());
+            System.out.println("❌ Content parsing failed: " + e.getMessage());
             extractSubjectAndBody(content, response);
         }
 
@@ -168,37 +229,45 @@ public class OllamaEmailService {
     }
 
     private void extractSubjectAndBody(String content, EmailResponse response) {
+        // Simple fallback - first line as subject, rest as body
         String[] lines = content.split("\n");
         if (lines.length > 0) {
             String subject = lines[0].trim();
-            if (subject.length() > 0 && subject.length() < 100) {
-                response.setSubject(subject);
-                StringBuilder body = new StringBuilder();
-                for (int i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim().isEmpty()) {
-                        body.append(lines[i]).append("\n");
-                    }
-                }
-                response.setGeneratedEmail(body.toString().trim());
-                return;
+            // Clean up subject if it's too long
+            if (subject.length() > 100) {
+                subject = subject.substring(0, 100) + "...";
             }
+            response.setSubject(subject.isEmpty() ? "AI Generated Email" : subject);
+
+            // Combine remaining lines as body
+            StringBuilder body = new StringBuilder();
+            for (int i = 1; i < lines.length; i++) {
+                body.append(lines[i].trim()).append("\n");
+            }
+            String emailBody = body.toString().trim();
+            response.setGeneratedEmail(emailBody.isEmpty() ? content : emailBody);
+        } else {
+            response.setSubject("Generated Email");
+            response.setGeneratedEmail(content);
         }
-        response.setSubject("Generated Email");
-        response.setGeneratedEmail(content);
     }
 
     private EmailResponse createFallbackResponse(EmailRequest request, String error) {
         EmailResponse response = new EmailResponse();
         response.setSuccess(false);
-        response.setProvider("Ollama Mistral");
+        response.setProvider("Fallback");
         response.setErrorMessage(error);
 
-        response.setGeneratedEmail(
-                "Dear " + request.getRecipient() + ",\n\n" +
-                        "I hope this message finds you well. This is regarding: " + request.getPrompt() + "\n\n" +
-                        "Best regards,\n[Your Name]"
+        // Create a simple fallback email
+        String fallbackEmail = String.format(
+                "Dear %s,\n\nI hope this message finds you well. %s\n\nBest regards,\n[Your Name]",
+                request.getRecipient(),
+                request.getPrompt()
         );
-        response.setSubject("Email: " + request.getSubjectHint());
+
+        response.setGeneratedEmail(fallbackEmail);
+        response.setSubject("Regarding: " + request.getSubjectHint());
+
         return response;
     }
 }

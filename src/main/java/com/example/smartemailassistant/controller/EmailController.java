@@ -18,16 +18,20 @@ public class EmailController {
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("emailRequest", new EmailRequest());
-        // Initialize empty response
-        EmailResponse emptyResponse = new EmailResponse();
-        emptyResponse.setSuccess(false);
-        model.addAttribute("emailResponse", emptyResponse);
         return "index";
     }
 
     @PostMapping("/generate")
     @ResponseBody
     public EmailResponse generateEmail(@RequestBody EmailRequest request) {
-        return emailService.generateEmail(request);
+        System.out.println("🎯 Received email generation request");
+        System.out.println("Topic: " + request.getPrompt());
+        System.out.println("Tone: " + request.getTone());
+        System.out.println("Recipient: " + request.getRecipient());
+
+        EmailResponse response = emailService.generateEmail(request);
+        System.out.println("📤 Sending response - Success: " + response.isSuccess());
+
+        return response;
     }
 }

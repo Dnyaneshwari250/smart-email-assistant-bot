@@ -1,0 +1,11 @@
+[build]
+builder = "maven"
+
+[deploy]
+startCommand = "java -Dserver.port=$PORT -jar target/smart-email-assistant-1.0.0.jar"
+
+[build.environment]
+JAVA_VERSION = "17"
+
+[service]
+http.port = 8080

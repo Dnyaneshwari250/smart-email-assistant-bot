@@ -1,14 +1,25 @@
 package com.example.smartemailassistant.model;
 
 public class EmailRequest {
-    private String prompt;
+    private String purpose;
     private String tone;
     private String recipient;
     private String subjectHint;
 
-    // Getters and Setters
-    public String getPrompt() { return prompt; }
-    public void setPrompt(String prompt) { this.prompt = prompt; }
+    // Default constructor
+    public EmailRequest() {}
+
+    // Parameterized constructor
+    public EmailRequest(String purpose, String tone, String recipient, String subjectHint) {
+        this.purpose = purpose;
+        this.tone = tone;
+        this.recipient = recipient;
+        this.subjectHint = subjectHint;
+    }
+
+    // Getters and setters
+    public String getPurpose() { return purpose; }
+    public void setPurpose(String purpose) { this.purpose = purpose; }
 
     public String getTone() { return tone; }
     public void setTone(String tone) { this.tone = tone; }
@@ -18,4 +29,7 @@ public class EmailRequest {
 
     public String getSubjectHint() { return subjectHint; }
     public void setSubjectHint(String subjectHint) { this.subjectHint = subjectHint; }
+
+    // Alias method for getPurpose to match your service
+    public String getPrompt() { return purpose; }
 }

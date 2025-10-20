@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Email Assistant</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #3498db;
+        }
+
+        .result.success {
+            border-left-color: #27ae60;
+        }
+
+        .result.error {
+            border-left-color: #e74c3c;
+        }
+
+        .result h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .email-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            margin: 15px 0;
+        }
+
+        .email-subject {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .email-body {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #34495e;
+        }
+
+        .copy-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #219a52;
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 10px;
+        }
+
+        .example-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .example-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            border-top: 1px solid #e1e8ed;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📧 Smart Email Assistant</h1>
+        <p>Generate professional emails in seconds with AI</p>
+    </div>
+
+    <div class="content">
+        <form id="emailForm">
+            <div class="form-group">
+                <label>✏️ What do you want to write about?</label>
+                <textarea name="prompt" id="prompt" placeholder="Example: Request a meeting to discuss project timeline and deliverables..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>🎭 Select Tone:</label>
+                <select name="tone" id="tone">
+                    <option value="FORMAL">Formal</option>
+                    <option value="PROFESSIONAL">Professional</option>
+                    <option value="CASUAL">Casual</option>
+                    <option value="FRIENDLY">Friendly</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>👤 Recipient:</label>
+                <input type="text" name="recipient" id="recipient" placeholder="Example: Project Manager, Team Members, Client..." required>
+            </div>
+
+            <div class="form-group">
+                <label>📋 Subject Suggestion:</label>
+                <input type="text" name="subjectHint" id="subjectHint" placeholder="Example: Meeting Request, Project Update, Follow-up..." required>
+            </div>
+
+            <button type="submit" class="generate-btn" id="generateBtn">🚀 Generate Email</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generating your perfect email...</p>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <div class="examples">
+            <h3>💡 Quick Examples:</h3>
+            <button type="button" class="example-btn" onclick="loadExample(1)">Meeting Request</button>
+            <button type="button" class="example-btn" onclick="loadExample(2)">Follow-up Email</button>
+            <button type="button" class="example-btn" onclick="loadExample(3)">Thank You Note</button>
+            <button type="button" class="example-btn" onclick="loadExample(4)">Project Update</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Powered by Google Gemini AI • Smart Email Assistant v1.0</p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('emailForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const data = {
+            purpose: document.getElementById('prompt').value,
+            tone: document.getElementById('tone').value,
+            recipient: document.getElementById('recipient').value,
+            subjectHint: document.getElementById('subjectHint').value
+        };
+
+        const generateBtn = document.getElementById('generateBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        if (loading) loading.style.display = 'block';
+        if (generateBtn) generateBtn.disabled = true;
+        if (result) result.style.display = 'none';
+
+        try {
+            const response = await fetch('http://localhost:8080/api/generate-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            const resultData = await response.json();
+
+            if (result) {
+                result.className = resultData.success ? 'result success' : 'result error';
+
+                let providerInfo = '';
+                if (resultData.provider) {
+                    providerInfo = `<p><strong>Powered by:</strong> ${escapeHtml(resultData.provider)}</p>`;
+                }
+
+                result.innerHTML = `
+                    <h3>${resultData.success ? '✅' : '⚠️'} Email Generated</h3>
+                    ${providerInfo}
+                    <div class="email-content">
+                        <div class="email-subject">📋 Subject: ${escapeHtml(resultData.subject)}</div>
+                        <div class="email-body">${escapeHtml(resultData.generatedEmail)}</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('${escapeString(resultData.subject)}', '${escapeString(resultData.generatedEmail)}')">
+                        📋 Copy Email to Clipboard
+                    </button>
+                `;
+                result.style.display = 'block';
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            if (result) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3>❌ Connection Error</h3>
+                    <p>Error: ${escapeHtml(error.message)}</p>
+                `;
+                result.style.display = 'block';
+            }
+        } finally {
+            if (loading) loading.style.display = 'none';
+            if (generateBtn) generateBtn.disabled = false;
+        }
+    });
+
+    // Keep the rest of your JavaScript functions the same...
+    function loadExample(exampleNum) {
+        const examples = {
+            1: {
+                prompt: "Request a meeting to discuss the Q3 project timeline, deliverables, and resource allocation for the upcoming quarter.",
+                tone: "FORMAL",
+                recipient: "Project Manager",
+                subjectHint: "Q3 Project Planning Meeting"
+            },
+            2: {
+                prompt: "Follow up on our conversation yesterday about the marketing campaign and request the design assets we discussed.",
+                tone: "PROFESSIONAL",
+                recipient: "Marketing Team",
+                subjectHint: "Follow-up: Marketing Campaign Assets"
+            },
+            3: {
+                prompt: "Thank you for your help with the client presentation yesterday. Your insights were incredibly valuable and made a big difference.",
+                tone: "FRIENDLY",
+                recipient: "Sarah",
+                subjectHint: "Thank You for Your Help"
+            },
+            4: {
+                prompt: "Provide an update on the current project status, including completed milestones, upcoming deadlines, and any blockers we're facing.",
+                tone: "PROFESSIONAL",
+                recipient: "Team Members",
+                subjectHint: "Project Status Update"
+            }
+        };
+
+        const example = examples[exampleNum];
+        if (example) {
+            document.getElementById('prompt').value = example.prompt;
+            document.getElementById('recipient').value = example.recipient;
+            document.getElementById('subjectHint').value = example.subjectHint;
+            document.getElementById('tone').value = example.tone;
+        }
+    }
+
+    function copyToClipboard(subject, body) {
+        const emailText = `Subject: ${subject}\n\n${body}`;
+        navigator.clipboard.writeText(emailText).then(() => {
+            alert('✅ Email copied to clipboard!');
+        }).catch(err => {
+            alert('❌ Failed to copy to clipboard');
+        });
+    }
+
+    function escapeString(str) {
+        if (!str) return '';
+        return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+    }
+
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+</script>
+</body>
+</html>

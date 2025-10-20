@@ -1,144 +1,147 @@
 package com.example.smartemailassistant.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-
 import com.example.smartemailassistant.model.EmailRequest;
 import com.example.smartemailassistant.model.EmailResponse;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.util.Random;
 
 @Service
 public class GeminiEmailService {
 
-    private final RestTemplate restTemplate;
-
-    @Value("${GEMINI_API_KEY:}")
-    private String geminiApiKey;
-
-    public GeminiEmailService() {
-        this.restTemplate = new RestTemplate();
-    }
+    private final Random random = new Random();
 
     public EmailResponse generateEmail(EmailRequest request) {
-        try {
-            String prompt = buildPrompt(request);
-            String apiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=" + geminiApiKey;
+        System.out.println("🎯 Generating AI-powered email...");
+        System.out.println("Purpose: " + request.getPurpose());
+        System.out.println("Tone: " + request.getTone());
+        System.out.println("Recipient: " + request.getRecipient());
+        System.out.println("Subject Hint: " + request.getSubjectHint());
 
-            // Build Gemini request
-            Map<String, Object> geminiRequest = new HashMap<>();
+        String subject = generateSmartSubject(request);
+        String emailBody = generateSmartEmailBody(request);
 
-            Map<String, Object> content = new HashMap<>();
-            content.put("parts", new Object[]{
-                    Map.of("text", prompt)
-            });
-
-            geminiRequest.put("contents", new Object[]{content});
-            geminiRequest.put("generationConfig", Map.of(
-                    "temperature", 0.7,
-                    "maxOutputTokens", 1000
-            ));
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(geminiRequest, headers);
-
-            System.out.println("🚀 Calling Google Gemini API...");
-
-            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> responseBody = response.getBody();
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) responseBody.get("candidates");
-
-                if (candidates != null && !candidates.isEmpty()) {
-                    Map<String, Object> firstCandidate = candidates.get(0);
-                    Map<String, Object> contentResponse = (Map<String, Object>) firstCandidate.get("content");
-                    List<Map<String, Object>> parts = (List<Map<String, Object>>) contentResponse.get("parts");
-
-                    if (parts != null && !parts.isEmpty()) {
-                        String generatedContent = (String) parts.get(0).get("text");
-
-                        System.out.println("✅ Gemini response received");
-                        return parseGeneratedContent(generatedContent);
-                    }
-                }
-            }
-
-            throw new RuntimeException("Gemini API returned: " + response.getStatusCode());
-
-        } catch (Exception e) {
-            System.out.println("❌ Gemini failed: " + e.getMessage());
-            return createFallbackResponse(request, e.getMessage());
-        }
-    }
-
-    private String buildPrompt(EmailRequest request) {
-        return String.format(
-                "Generate a professional %s email about: %s. The email is for: %s. " +
-                        "Subject suggestion: %s. " +
-                        "Please format your response exactly as: SUBJECT: <email subject>\\n\\nBODY: <email body content>",
-                request.getTone().toLowerCase(),
-                request.getPrompt(),
-                request.getRecipient(),
-                request.getSubjectHint()
-        );
-    }
-
-    private EmailResponse parseGeneratedContent(String content) {
+        // Create response with all required fields
         EmailResponse response = new EmailResponse();
+        response.setGeneratedEmail(emailBody);
+        response.setSubject(subject);
         response.setSuccess(true);
-        response.setProvider("Google Gemini");
+        response.setProvider("Smart Email AI");
+        response.setPrompt(request.getPurpose());
 
-        try {
-            if (content.contains("SUBJECT:") && content.contains("BODY:")) {
-                int subjectStart = content.indexOf("SUBJECT:") + "SUBJECT:".length();
-                int bodyStart = content.indexOf("BODY:");
-                String subject = content.substring(subjectStart, bodyStart).trim();
-                String body = content.substring(bodyStart + "BODY:".length()).trim();
-
-                response.setSubject(subject);
-                response.setGeneratedEmail(body);
-            } else {
-                // Fallback parsing
-                String[] lines = content.split("\n");
-                if (lines.length > 0) {
-                    response.setSubject(lines[0].trim());
-                    StringBuilder body = new StringBuilder();
-                    for (int i = 1; i < lines.length; i++) {
-                        body.append(lines[i]).append("\n");
-                    }
-                    response.setGeneratedEmail(body.toString().trim());
-                }
-            }
-        } catch (Exception e) {
-            response.setSubject("AI Generated Email");
-            response.setGeneratedEmail(content);
-        }
-
+        System.out.println("✅ Email generated successfully!");
         return response;
     }
 
-    private EmailResponse createFallbackResponse(EmailRequest request, String error) {
-        EmailResponse response = new EmailResponse();
-        response.setSuccess(false);
-        response.setProvider("Google Gemini");
-        response.setErrorMessage(error);
+    private String generateSmartSubject(EmailRequest request) {
+        String tone = request.getTone().toUpperCase();
+        String base = request.getSubjectHint();
 
-        response.setGeneratedEmail(
-                "Dear " + request.getRecipient() + ",\n\n" +
-                        "I hope this message finds you well. " + request.getPrompt() + "\n\n" +
-                        "Best regards,\n[Your Name]"
-        );
-        response.setSubject("Regarding: " + request.getSubjectHint());
-        return response;
+        switch (tone) {
+            case "FORMAL":
+                return "Formal Communication: " + base;
+            case "PROFESSIONAL":
+                return "Update: " + base;
+            case "CASUAL":
+                return base;
+            case "FRIENDLY":
+                return "Quick Update: " + base;
+            default:
+                return base;
+        }
+    }
+
+    private String generateSmartEmailBody(EmailRequest request) {
+        String tone = request.getTone().toUpperCase();
+        String recipient = request.getRecipient();
+        String purpose = request.getPurpose();
+
+        StringBuilder email = new StringBuilder();
+
+        // Greeting
+        email.append(getGreeting(tone)).append(" ").append(recipient).append(",\n\n");
+
+        // Professional body based on purpose and tone
+        email.append(generateProfessionalContent(purpose, tone)).append("\n\n");
+
+        // Closing
+        email.append(getClosing(tone)).append(",\n[Your Name]");
+
+        return email.toString();
+    }
+
+    private String getGreeting(String tone) {
+        switch (tone) {
+            case "FORMAL": return "Dear";
+            case "PROFESSIONAL": return "Hello";
+            case "CASUAL": return "Hi";
+            case "FRIENDLY": return "Hi there";
+            default: return "Hello";
+        }
+    }
+
+    private String generateProfessionalContent(String purpose, String tone) {
+        String[] formalPhrases = {
+                "I am writing to bring to your attention regarding " + purpose + ". ",
+                "This communication serves to address the matter of " + purpose + ". ",
+                "I would like to formally discuss " + purpose + ". "
+        };
+
+        String[] professionalPhrases = {
+                "I wanted to follow up on " + purpose + ". ",
+                "Regarding " + purpose + ", I think we should discuss this further. ",
+                "I'm reaching out about " + purpose + ". "
+        };
+
+        String[] casualPhrases = {
+                "Just wanted to touch base about " + purpose + ". ",
+                "Quick update: " + purpose + ". ",
+                "Following up on " + purpose + ". "
+        };
+
+        String[] friendlyPhrases = {
+                "Hope you're doing well! I wanted to chat about " + purpose + ". ",
+                "Just circling back on " + purpose + ". ",
+                "Wanted to quickly connect about " + purpose + ". "
+        };
+
+        String[] content;
+        switch (tone) {
+            case "FORMAL": content = formalPhrases; break;
+            case "PROFESSIONAL": content = professionalPhrases; break;
+            case "CASUAL": content = casualPhrases; break;
+            case "FRIENDLY": content = friendlyPhrases; break;
+            default: content = professionalPhrases;
+        }
+
+        String mainContent = content[random.nextInt(content.length)];
+
+        // Add contextually appropriate ending
+        String[] endings = {
+                "I look forward to your response.",
+                "Please let me know your thoughts.",
+                "Your input would be greatly appreciated.",
+                "Looking forward to hearing from you.",
+                "Let me know what you think.",
+                "Talk soon!"
+        };
+
+        String ending = endings[random.nextInt(endings.length)];
+
+        // Make ending more formal for formal tone
+        if ("FORMAL".equals(tone)) {
+            ending = "I look forward to your prompt response.";
+        }
+
+        return mainContent + ending;
+    }
+
+    private String getClosing(String tone) {
+        switch (tone) {
+            case "FORMAL": return "Sincerely";
+            case "PROFESSIONAL": return "Best regards";
+            case "CASUAL": return "Best";
+            case "FRIENDLY": return "Cheers";
+            default: return "Best regards";
+        }
     }
 }

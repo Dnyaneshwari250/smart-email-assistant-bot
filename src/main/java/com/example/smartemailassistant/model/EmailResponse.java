@@ -5,9 +5,30 @@ public class EmailResponse {
     private String subject;
     private boolean success;
     private String provider;
-    private String errorMessage;
+    private String prompt;
 
-    // Getters and Setters
+    // Default constructor
+    public EmailResponse() {}
+
+    // Constructor for all fields
+    public EmailResponse(String generatedEmail, String subject, boolean success, String provider, String prompt) {
+        this.generatedEmail = generatedEmail;
+        this.subject = subject;
+        this.success = success;
+        this.provider = provider;
+        this.prompt = prompt;
+    }
+
+    // Constructor for basic fields
+    public EmailResponse(String generatedEmail, String subject) {
+        this.generatedEmail = generatedEmail;
+        this.subject = subject;
+        this.success = true;
+        this.provider = "Google Gemini AI";
+        this.prompt = "";
+    }
+
+    // Getters and setters
     public String getGeneratedEmail() { return generatedEmail; }
     public void setGeneratedEmail(String generatedEmail) { this.generatedEmail = generatedEmail; }
 
@@ -20,6 +41,6 @@ public class EmailResponse {
     public String getProvider() { return provider; }
     public void setProvider(String provider) { this.provider = provider; }
 
-    public String getErrorMessage() { return errorMessage; }
-    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+    public String getPrompt() { return prompt; }
+    public void setPrompt(String prompt) { this.prompt = prompt; }
 }

@@ -1,29 +1,29 @@
 package com.example.smartemailassistant.controller;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.ResponseEntity;
 import java.util.Map;
 import java.util.HashMap;
 
-@RestController
+@Controller
 public class HealthController {
 
+    @GetMapping("/")
+    public String home() {
+        System.out.println("🟢 Redirecting to index.html");
+        return "redirect:/index.html"; // This will redirect to the static file
+    }
+
     @GetMapping("/health")
+    @ResponseBody
     public ResponseEntity<Map<String, String>> health() {
         Map<String, String> response = new HashMap<>();
         response.put("status", "UP");
         response.put("message", "Smart Email Assistant is running!");
         response.put("service", "Google Gemini API");
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/")
-    public ResponseEntity<Map<String, String>> home() {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Welcome to Smart Email Assistant!");
-        response.put("endpoint", "Use POST /generate to create emails");
-        response.put("example", "curl -X POST /generate -H \"Content-Type: application/json\" -d '{\"prompt\":\"meeting request\",\"tone\":\"FORMAL\",\"recipient\":\"manager\",\"subjectHint\":\"Meeting\"}'");
+        response.put("timestamp", java.time.LocalDateTime.now().toString());
         return ResponseEntity.ok(response);
     }
 }

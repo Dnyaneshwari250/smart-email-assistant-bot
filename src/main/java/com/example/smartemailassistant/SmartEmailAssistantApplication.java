@@ -8,6 +8,5 @@ public class SmartEmailAssistantApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SmartEmailAssistantApplication.class, args);
-        System.out.println("🚀 Smart Email Assistant started successfully!");
     }
 }

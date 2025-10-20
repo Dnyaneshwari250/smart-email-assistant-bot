@@ -34,7 +34,7 @@ public class OllamaEmailService {
             String prompt = buildPrompt(request);
 
             // Use the configured base URL and model
-            String apiUrl = ollamaBaseUrl + "/api/generate";
+            String apiUrl = ollamaBaseUrl + "/api/generate/";
 
             // Prepare the request to Ollama
             Map<String, Object> ollamaRequest = new HashMap<>();

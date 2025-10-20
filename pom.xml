@@ -54,7 +54,10 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+<<<<<<< HEAD
                     <mainClass>com.example.smartemailassistant.SmartEmailAssistantApplication</mainClass>
+=======
+>>>>>>> 504b364f9f1e90c4a266e2dee449f232aa4bd926
                     <excludes>
                         <exclude>
                             <groupId>org.springframework.boot</groupId>

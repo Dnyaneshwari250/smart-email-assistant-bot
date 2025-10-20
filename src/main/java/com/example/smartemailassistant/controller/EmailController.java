@@ -1,5 +1,6 @@
 package com.example.smartemailassistant.controller;
 
+<<<<<<< HEAD
 import com.example.smartemailassistant.model.EmailRequest;
 import com.example.smartemailassistant.model.EmailResponse;
 import com.example.smartemailassistant.service.GeminiEmailService;
@@ -12,12 +13,24 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+=======
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.smartemailassistant.model.EmailRequest;
+import com.example.smartemailassistant.model.EmailResponse;
+import com.example.smartemailassistant.service.GeminiEmailService;
+
+@RestController
+>>>>>>> 504b364f9f1e90c4a266e2dee449f232aa4bd926
 @CrossOrigin(origins = "*")
 public class EmailController {
 
     @Value("${gemini.api.key:}")
     private String apiKey;
 
+<<<<<<< HEAD
     private final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
     private final GeminiEmailService emailService;
@@ -124,5 +137,35 @@ public class EmailController {
         }
 
         return null;
+=======
+    @PostMapping("/generate")
+    public ResponseEntity<EmailResponse> generateEmail(@RequestBody EmailRequest request) {
+        try {
+            System.out.println("📧 Received email generation request");
+            System.out.println("Prompt: " + request.getPrompt());
+            System.out.println("Tone: " + request.getTone());
+            System.out.println("Recipient: " + request.getRecipient());
+
+            EmailResponse response = emailService.generateEmail(request);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Controller error: " + e.getMessage());
+            EmailResponse errorResponse = new EmailResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setProvider("Google Gemini");
+            errorResponse.setErrorMessage("Service unavailable: " + e.getMessage());
+
+            // Create fallback response
+            errorResponse.setSubject("Regarding: " + request.getSubjectHint());
+            errorResponse.setGeneratedEmail(
+                    "Dear " + request.getRecipient() + ",\n\n" +
+                            request.getPrompt() + "\n\n" +
+                            "Best regards,\n[Your Name]"
+            );
+
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+>>>>>>> 504b364f9f1e90c4a266e2dee449f232aa4bd926
     }
 }

@@ -10,6 +10,7 @@ public class EmailResponse {
     // Default constructor
     public EmailResponse() {}
 
+<<<<<<< HEAD
     // Constructor for all fields
     public EmailResponse(String generatedEmail, String subject, boolean success, String provider, String prompt) {
         this.generatedEmail = generatedEmail;
@@ -29,6 +30,9 @@ public class EmailResponse {
     }
 
     // Getters and setters
+=======
+    // Getters and Setters
+>>>>>>> 504b364f9f1e90c4a266e2dee449f232aa4bd926
     public String getGeneratedEmail() { return generatedEmail; }
     public void setGeneratedEmail(String generatedEmail) { this.generatedEmail = generatedEmail; }
 

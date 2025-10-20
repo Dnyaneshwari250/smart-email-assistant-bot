@@ -11,8 +11,8 @@ server:
 
 # AI Configuration - FIXED: No circular reference
 ai:
-  base-url: ${AI_BASE_URL:http://localhost:11434}
-  model: ${OLLAMA_MODEL:mistral}
+  base-url: ${ai.base-url:http://localhost:11434}
+  model: ${ai.model:mistral}
 
 logging:
   level:

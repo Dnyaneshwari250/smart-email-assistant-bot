@@ -126,6 +126,7 @@
             cursor: pointer;
             font-size: 14px;
             transition: background 0.2s;
+            white-space: nowrap;
         }
         .copy-btn:hover {
             background: #218838;
@@ -135,17 +136,45 @@
         }
         .email-content {
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 6px;
             border: 1px solid #e1e5e9;
             white-space: pre-wrap;
-            line-height: 1.5;
+            line-height: 1.6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .email-content pre {
+            margin: 0;
             font-family: inherit;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
         .loading {
             text-align: center;
             color: #666;
             font-style: italic;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .result-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            .copy-btn {
+                align-self: flex-end;
+            }
         }
     </style>
 </head>
@@ -292,7 +321,7 @@
                 
                 // Handle different response formats
                 const emailText = data.generatedEmail || data.email || 'No email content received';
-                emailOutput.innerHTML = `<pre style="margin: 0; font-family: inherit;">${emailText}</pre>`;
+                emailOutput.innerHTML = `<pre>${emailText}</pre>`;
                 resultDiv.style.display = 'block';
                 
             } catch (error) {

@@ -111,6 +111,42 @@
             color: #666;
             font-size: 14px;
         }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover {
+            background: #218838;
+        }
+        .copy-btn.copied {
+            background: #6c757d;
+        }
+        .email-content {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e1e5e9;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -153,8 +189,11 @@
         </div>
         
         <div id="result" class="result">
-            <h3>Generated Email:</h3>
-            <pre id="emailOutput" style="white-space: pre-wrap; font-family: inherit;"></pre>
+            <div class="result-header">
+                <h3 style="margin: 0;">Generated Email</h3>
+                <button class="copy-btn" onclick="copyToClipboard()" id="copyBtn">📋 Copy Email</button>
+            </div>
+            <div class="email-content" id="emailOutput"></div>
         </div>
 
         <div class="footer">
@@ -168,28 +207,28 @@
         function loadExample(type) {
             const examples = {
                 'Meeting Request': {
-                    topic: 'Request a meeting to discuss the Q3 project timeline, deliverables, and resource allocation for the upcoming quarter.',
+                    topic: 'Request a meeting to discuss the Q3 project timeline, deliverables, and resource allocation for the upcoming quarter. Please include specific dates and required attendees.',
                     tone: 'formal',
                     recipient: 'Project Manager',
                     subject: 'Q3 Project Planning Meeting'
                 },
                 'Follow-up Email': {
-                    topic: 'Follow up on our recent conversation about the marketing campaign and provide additional details about the implementation timeline.',
+                    topic: 'Follow up on our recent conversation about the marketing campaign and provide additional details about the implementation timeline, budget considerations, and expected outcomes.',
                     tone: 'professional',
                     recipient: 'Marketing Team',
                     subject: 'Follow-up: Marketing Campaign Discussion'
                 },
                 'Thank You Note': {
-                    topic: 'Express gratitude for the excellent collaboration on the recent project and acknowledge the team hard work and dedication.',
+                    topic: 'Express sincere gratitude for the excellent collaboration on the recent project and acknowledge the team exceptional hard work, dedication, and innovative solutions that led to our success.',
                     tone: 'friendly',
                     recipient: 'Project Team',
-                    subject: 'Thank You for Your Great Work!'
+                    subject: 'Thank You for Your Outstanding Work!'
                 },
                 'Project Update': {
-                    topic: 'Provide a progress update on the website redesign project, including completed milestones, current challenges, and next steps.',
+                    topic: 'Provide a comprehensive progress update on the website redesign project, including completed milestones, current challenges, resource requirements, and next steps with timelines.',
                     tone: 'professional',
                     recipient: 'Stakeholders',
-                    subject: 'Project Update: Website Redesign'
+                    subject: 'Project Update: Website Redesign Progress'
                 }
             };
 
@@ -221,6 +260,8 @@
             resultDiv.className = 'result';
             generateBtn.disabled = true;
             generateBtn.textContent = '⏳ Generating...';
+            emailOutput.innerHTML = '<div class="loading">Generating your professional email... This may take a few seconds.</div>';
+            resultDiv.style.display = 'block';
 
             try {
                 console.log('Sending request with data:', { topic, tone, recipient, subject });
@@ -235,8 +276,8 @@
                         tone: tone,
                         recipient: recipient,
                         subject: subject,
-                        purpose: topic, // Add purpose field for backend
-                        subjectHint: subject // Add subjectHint for backend
+                        purpose: topic,
+                        subjectHint: subject
                     })
                 });
 
@@ -251,18 +292,39 @@
                 
                 // Handle different response formats
                 const emailText = data.generatedEmail || data.email || 'No email content received';
-                emailOutput.textContent = emailText;
+                emailOutput.innerHTML = `<pre style="margin: 0; font-family: inherit;">${emailText}</pre>`;
                 resultDiv.style.display = 'block';
                 
             } catch (error) {
                 console.error('Error:', error);
-                emailOutput.textContent = 'Error: ' + error.message;
+                emailOutput.innerHTML = `<div style="color: #d63031;">Error: ${error.message}</div>`;
                 resultDiv.className = 'result error';
                 resultDiv.style.display = 'block';
             } finally {
                 generateBtn.disabled = false;
                 generateBtn.textContent = '🚀 Generate Email';
             }
+        }
+
+        function copyToClipboard() {
+            const emailOutput = document.getElementById('emailOutput');
+            const copyBtn = document.getElementById('copyBtn');
+            const emailText = emailOutput.innerText || emailOutput.textContent;
+            
+            navigator.clipboard.writeText(emailText).then(() => {
+                // Show success feedback
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.classList.add('copied');
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy Email';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy email to clipboard. Please select and copy manually.');
+            });
         }
 
         // Test API connection on page load

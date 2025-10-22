@@ -212,7 +212,7 @@
             const emailOutput = document.getElementById('emailOutput');
 
             if (!topic || !recipient) {
-                alert('Please fill in all required fields');
+                alert('Please fill in the topic and recipient fields');
                 return;
             }
 
@@ -223,7 +223,7 @@
             generateBtn.textContent = '⏳ Generating...';
 
             try {
-                console.log('Sending request to:', API_BASE_URL + '/generate-email');
+                console.log('Sending request with data:', { topic, tone, recipient, subject });
                 
                 const response = await fetch(API_BASE_URL + '/generate-email', {
                     method: 'POST',
@@ -234,7 +234,9 @@
                         topic: topic,
                         tone: tone,
                         recipient: recipient,
-                        subject: subject
+                        subject: subject,
+                        purpose: topic, // Add purpose field for backend
+                        subjectHint: subject // Add subjectHint for backend
                     })
                 });
 

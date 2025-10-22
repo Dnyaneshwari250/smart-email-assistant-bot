@@ -5,13 +5,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class HealthController {
-    @GetMapping("/")
-    public String home() {
-        return "Smart Email Assistant is running!";
-    }
     
+    // Remove the root mapping to allow index.html to be served
     @GetMapping("/health")
     public String health() {
         return "OK";
+    }
+    
+    @GetMapping("/api/health")
+    public String apiHealth() {
+        return "API is healthy";
     }
 }
